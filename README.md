@@ -2,7 +2,7 @@
 This is a Full Stack Course Selling App built using basic HTML, CSS, JS, Express, Mongo &amp; NodeJS
 
 
-Steps To Do: 
+Steps Done: 
 
  - Initialize a new Node.js project
  - Add Express, jsonwebtoken as a dependency
@@ -12,4 +12,8 @@ Steps To Do:
  - Add a database (mongodb), use dotenv to store the database connection string
  - Define the schema for user, admin, course, purchase
  - Complete the routes for user login, signup, purchase a course, see course
+ 
+
+Steps To Do:
+
  - Create a Simple Frontend

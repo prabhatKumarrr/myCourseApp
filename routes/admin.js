@@ -1,13 +1,14 @@
 const { Router } = require("express");
-const { adminModel, courseModel } = require(../db);
+const { adminModel, courseModel } = require("../db");
 const jwt = require("jsonwebtoken");
 const{ JWT_ADMIN_PASSWORD } = require("../config");
 const { adminMiddleware } = require("../middlewares/admin");
 const adminRouter = Router();
+const { inputSignUp, inputSignIn, inputCourse } = require("../middlewares/inputValidation");
 
-//bcrypt, zod to be added later
+//bcrypt to be added later
 
-adminRouter.post("/signup", async (req, res) => {
+adminRouter.post("/signup", inputSignUp, async (req, res) => {
   const { email, password, firstName, lastName } = req.body;
   //Add Zod validation
   //hash the password
@@ -24,7 +25,7 @@ adminRouter.post("/signup", async (req, res) => {
   });
 });
 
-adminRouter.post("/signin", async (req, res) => {
+adminRouter.post("/signin", inputSignIn, async (req, res) => {
   const { email, password } = req.body;
 
   const admin = await adminModel.findOne({
@@ -51,7 +52,7 @@ adminRouter.post("/signin", async (req, res) => {
   }
 });
 
-adminRouter.post("/createCourse", adminMiddleware, async (req, res) => {
+adminRouter.post("/createCourse", adminMiddleware, inputCourse, async (req, res) => {
   const adminId = req.adminId;
 
   const { title, description, imageUrl, price } = req.body;
@@ -73,14 +74,33 @@ adminRouter.post("/createCourse", adminMiddleware, async (req, res) => {
 });
 
 
-//Update Later....
-adminRouter.delete("/deleteCourse", (req, res) => {
-  res.json({
-    msg: "Course Deleted",
+adminRouter.delete("/deleteCourse", adminMiddleware, async (req, res) =>  {
+  const adminId = req.adminId;
+  const courseId = req.body.courseId;
+
+  const course = await courseModel.findOne({
+    _id: courseId,
+    creatorId: adminId,
   });
+
+  if(!course) {
+    res.status(403).json({
+      message: "Course not Found! or Unauthorised Creator/admin",
+    });
+  }
+  else {
+    await courseModel.deleteOne({
+      _id: courseId,
+    });
+    
+    res.json({
+      message: "Course removed Successfully",
+    });
+
+  }
 });
 
-adminRouter.put("/changeContent", adminMiddleware, async (req, res) => {
+adminRouter.put("/changeContent", adminMiddleware, inputCourse, async (req, res) => {
   const adminId = req.adminId;
 
   const { title, description, imageUrl, price, courseId } = req.body;
@@ -115,5 +135,5 @@ adminRouter.get("/course/bulk", adminMiddleware, async (req, res) => {
 });
 
 module.exports = {
-  adminRouter: adminRouter,
+  adminRouter,
 }

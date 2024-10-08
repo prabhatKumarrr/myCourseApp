@@ -10,9 +10,9 @@ const { adminRouter } = require("./routes/admin");
 const app = express();
 app.use(express.json());
 
+app.use("/admin", adminRouter);
 app.use("/user", userRouter);
 app.use("/courses", courseRouter);
-app.use("/admin", adminRouter);
 
 
 async function main() {
@@ -21,3 +21,5 @@ async function main() {
     console.log("Running at Port -> " + PORT);
   });
 }
+
+main();
