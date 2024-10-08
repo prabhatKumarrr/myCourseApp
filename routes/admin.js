@@ -5,17 +5,18 @@ const{ JWT_ADMIN_PASSWORD } = require("../config");
 const { adminMiddleware } = require("../middlewares/admin");
 const adminRouter = Router();
 const { inputSignUp, inputSignIn, inputCourse } = require("../middlewares/inputValidation");
+const bcrypt = require("bcrypt");
 
-//bcrypt to be added later
+
 
 adminRouter.post("/signup", inputSignUp, async (req, res) => {
   const { email, password, firstName, lastName } = req.body;
-  //Add Zod validation
-  //hash the password
+  
+  const hashPass = await bcrypt.hash(password, 10);
 
   await adminModel.create({
     email,
-    password,
+    password: hashPass,
     firstName,
     lastName
   });
@@ -30,23 +31,31 @@ adminRouter.post("/signin", inputSignIn, async (req, res) => {
 
   const admin = await adminModel.findOne({
     email: email,
-    password: password //compare hashed passwords here
   });
 
   if(admin) {
-    const token = jwt.sign({
-      id: admin._id,
-    }, JWT_ADMIN_PASSWORD);
+    const hashPass = await bcrypt.compare(password, admin.password);
 
-    //try cookie logic
-    
-    res.json({
-      msg: "Signed In",
-      token: token,
-    });
+    if(hashPass) {
+      const token = jwt.sign({
+        id: admin._id,
+      }, JWT_ADMIN_PASSWORD);
+     
+      //try cookie logic
+
+      res.json({
+        msg: "Signed In",
+        token: token,
+      });
+    }
+    else {
+      res.status(403).json({
+        message: "Incorrect Password"
+      });
+    }
   }
   else {
-    res.status(403).json({
+    res.status(404).json({
       message: "Invalid Credentials",
     });
   }

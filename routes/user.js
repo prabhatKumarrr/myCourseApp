@@ -8,17 +8,18 @@ const { inputSignUp, inputSignIn } = require("../middlewares/inputValidation");
 
 userRouter.post("/signup", inputSignUp, async (req, res) => {
   const { email, password, firstName, lastName } = req.body;
-  //same Todos as admin signup/signin endpoints
+  
+  const hashPass = await bcrypt.hash(password, 10);
 
-  await userModel.create({
-    email: email,
-    password: password,
-    firstName: firstName,
-    lastName: lastName
+  await adminModel.create({
+    email,
+    password: hashPass,
+    firstName,
+    lastName
   });
 
   res.json({
-    message: "Signed Up",
+    msg: "Signed up",
   });
 });
 
@@ -27,22 +28,32 @@ userRouter.post("/signin", inputSignIn, async function(req, res) {
 
   const user = await userModel.findOne({
     email: email,
-    password: password
   });
 
-  if(user) {
-    const token = jwt.sign({
-      id: user._id,
-    }, JWT_USER_PASSWORD);
+  if(admin) {
+    const hashPass = await bcrypt.compare(password, admin.password);
 
-    res.json({
-      msg: "Signed In",
-      token: token
-    });
+    if(hashPass) {
+      const token = jwt.sign({
+        id: user._id,
+      }, JWT_USER_PASSWORD);
+     
+      //try cookie logic
+
+      res.json({
+        msg: "Signed In",
+        token: token,
+      });
+    }
+    else {
+      res.status(403).json({
+        message: "Incorrect Password"
+      });
+    }
   }
   else {
-    res.status(403).json({
-      message: "Incorrect credentials"
+    res.status(404).json({
+      message: "Invalid Credentials",
     });
   }
 });
